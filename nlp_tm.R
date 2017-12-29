@@ -5,29 +5,29 @@ library(tm)
 
 #remove.packages(tm)
 #install.packages("http://cran.r-project.org/bin/windows/contrib/3.0/tm_0.5-10.zip",repos=NULL)
-library(tm)
+# library(tm)
 #install.packages("filehash")
-library(filehash)
+# library(filehash)
 
 
-docs <- Corpus(DirSource("data/sample/"))
-
-docs
-
-CMetaData(docs)
-
-summary(docs)
-
-
-
-start_time<-Sys.time()
-dtm<-DocumentTermMatrix(docs)
-end_time<-Sys.time()
-end_time-start_time
-
-object.size(docs)
-
-dtm
+# docs <- Corpus(DirSource("data/sample/"))
+# 
+# docs
+# 
+# CMetaData(docs)
+# 
+# summary(docs)
+# 
+# 
+# 
+# start_time<-Sys.time()
+# dtm<-DocumentTermMatrix(docs)
+# end_time<-Sys.time()
+# end_time-start_time
+# 
+# object.size(docs)
+# 
+# dtm
 
 ## --------------------------------------------------------------------
 
@@ -60,8 +60,60 @@ max_line_length<-lapply(line_length,max)
 
 result_df<-cbind(result_df,max_line_length)
 
-
+result_df
 ## result_df contains the basic summary
+
+
+mySample <- function(x,p) {
+     sample(x,length(x)*p)
+}
+
+## 
+
+set.seed(35546)
+linesSample<-lapply(lines,mySample,0.05)
+
+lines<-linesSample
+
+mygsub <- function(x,p,r) { 
+     
+     #wrapper function for easy gsub usage in lapply
+     gsub(p,r,x)
+}
+linesClean<-lapply(linesSample,mygsub,"^(https?:\\/\\/)?([\\da-z\\.-]+)\\.([a-z\\.]{2,6})([\\/\\w \\.-]*)*\\/?$"," ")
+linesClean<-lapply(linesClean,mygsub,"\\?\\!",".")
+linesClean<-lapply(linesClean,mygsub,"[^[:print:][:punct:]]"," ")
+
+
+docs<-VCorpus(VectorSource(linesClean))
+
+#docs <- tm_map(docs, removePunctuation)
+
+
+dtm <- DocumentTermMatrix(docs)
+
+freq <- colSums(as.matrix(dtm))
+
+#create sort order (descending)
+ord <- order(freq,decreasing=TRUE)
+
+#inspect most frequently occurring terms
+freq[head(ord)]
+
+# inspect(dtm[1:3,1:1000])
+
+df<-inspect(dtm[1:3,head(ord,250)])
+
+freqTerms<-findFreqTerms(dtm,lowfreq=1000)
+
+freqTerms
+
+findAssocs(dtm,"you",0.8)
+
+hist(df)
+
+
+summary(docs)
 
 
 lapply(lines,grep,)
