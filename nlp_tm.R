@@ -88,6 +88,11 @@ linesClean<-lapply(linesClean,mygsub,"[^[:print:][:punct:]]"," ")
 docs<-VCorpus(VectorSource(linesClean))
 
 #docs <- tm_map(docs, removePunctuation)
+docs <- tm_map(docs, removeNumbers)
+#remove stopwords using the standard list in tm
+docs <- tm_map(docs, removeWords, stopwords("english"))
+docs <- tm_map(docs, removePunctuation)
+# docs <- tm_map(docs, stemDocument, language = c("english"), lazy = TRUE)
 
 
 dtm <- DocumentTermMatrix(docs)
@@ -102,13 +107,100 @@ freq[head(ord)]
 
 # inspect(dtm[1:3,1:1000])
 
-df<-inspect(dtm[1:3,head(ord,250)])
+word_matrix<-inspect(dtm[1:3,head(ord,25)])
+
+rownames(word_matrix)<-c("blogs","news","twitter")
+
+
+# barplot(word_matrix, main="Frequnecy of words", ylab= "Total", col=heat.colors(3),cex.names = .8)
+
+
+word_matrix
+
+library(reshape2)
+
+df<-melt(word_matrix)
+
+df
+
+library(ggplot2)
+
+g = ggplot(data=df,aes(x=Terms,fill=factor(Docs),y=value))
+g = g + geom_bar(stat = "identity", position = "stack")
+g
+
+
+
+
+
+
+library(ggplot2)
+
+colnames(df)
+
+plot(df)
+
+
 
 freqTerms<-findFreqTerms(dtm,lowfreq=1000)
 
 freqTerms
 
-findAssocs(dtm,"you",0.8)
+BigramTokenizer <- function(x) 
+{
+     RWeka::NGramTokenizer(x, RWeka::Weka_control(min=2, max=2))
+}
+
+library(slam)
+# install.packages("SnowballC")
+# install.packages("RWeka")
+library(SnowballC)
+library(RWeka)
+options(mc.cores=1)
+dtm.docs.2g <- DocumentTermMatrix(docs, control=list(tokenize=BigramTokenizer))
+
+sums.2g <- colapply_simple_triplet_matrix(dtm.docs.2g,FUN=sum)
+sums.2g <- sort(sums.2g, decreasing=T)
+
+head(sums.2g)
+
+inspect(dtm.docs.2g[1:3,1:100])
+
+tail(sums.2g)
+
+str(sums.2g)
+
+hist(sums.2g)
+
+sums.2g[sums.2g>100]
+
+
+MultiTokenizer <- function(x) 
+{
+     RWeka::NGramTokenizer(x, RWeka::Weka_control(min=2, max=5))
+}
+
+dtm.docs.2g <- DocumentTermMatrix(docs, control=list(tokenize=MultiTokenizer))
+
+sums.2g <- colapply_simple_triplet_matrix(dtm.docs.2g,FUN=sum)
+sums.2g <- sort(sums.2g, decreasing=T)
+
+head(sums.2g)
+
+inspect(dtm.docs.2g[1:3,1:100])
+
+tail(sums.2g)
+
+str(sums.2g)
+
+hist(sums.2g)
+
+sums.2g[sums.2g>1000]
+
+
+head(findAssocs(dtm,"you",.8))
+
+dtm
 
 hist(df)
 
