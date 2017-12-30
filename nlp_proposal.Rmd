@@ -1,5 +1,5 @@
 ---
-title: "Exploratory analysis Corpus text data to build a predictive texting solution"
+title: "Analysis of Corpus text data to build a predictive texting solution"
 author: "Sayef Ishauqe"
 date: "December 30, 2017"
 output: html_document
@@ -80,8 +80,9 @@ linesSample<-lapply(lines,getLineSample,sample_no_of_lines_per_file)
 
 sample_size<- format(object.size(linesSample),units="MB")
 
+
 ```
-The above sampling technique takes `r sample_no_of_lines_per_file` lines from each
+The above sampling technique takes `r format(sample_no_of_lines_per_file,digits=5)` lines from each
 file and creates sample text of size `r sample_size`.
 
 ## Pre-processing of sample data
@@ -89,7 +90,7 @@ At first, the punctuation and non-printable characters has to be removed as thos
 can cause the script to terminate abruptly. Once, this is done, more sophiscticated 
 clean-up can be done using pre-built packages.
 
-```{r pre_processing, message=FALSE, warning=FALSE, cache=TRUE, include=FALSE}
+```{r pre_processing, echo=TRUE, message=FALSE, warning=FALSE, cache=TRUE}
 library(tm)
 mygsub <- function(x,p,r) { 
      
@@ -109,6 +110,9 @@ docs <- tm_map(docs, removeWords, stopwords("english"))
 docs <- tm_map(docs, removePunctuation)
 docs <- tm_map(docs, stemDocument, language = c("english"), lazy = TRUE)
 
+```
+
+```{r create_matrix, include=FALSE, cache=TRUE}
 start_time<-Sys.time()
 dtm <- DocumentTermMatrix(docs)
 end_time<-Sys.time()
@@ -119,9 +123,7 @@ freq <- colSums(as.matrix(dtm))
 freqTerms<-length(freq[freq>1])
 #create sort order (descending)
 ord <- order(freq,decreasing=TRUE)
-# 
-# #inspect most frequently occurring terms
-# freq[head(ord)]
+
 word_matrix<-inspect(dtm[1:3,head(ord,20)])
 
 rownames(word_matrix)<-c("Blogs","News","Twitter")
@@ -215,11 +217,11 @@ At this point, it is evident that the approach taken to develop a list of freque
 terms and 2-g terms can be followed to prepare a predictive texting solution.
 
 - The pre-processing and sampling apprach taken works to analyze freqent words and
-2-g terms. For sample size `r sample_size`, it took `r time_taken_freq_terms` mins to 
-generate frequent terms and `r time_taken_2g` mins for 2-g terms respectively.
+2-g terms. For sample size `r sample_size`, it took `r round(time_taken_freq_terms,2)` mins to 
+generate frequent terms and `r round(time_taken_2g,2)` mins for 2-g terms respectively.
 
 - Number of frequent and 2-g terms identified could be used to develop the predictive
-texting solution. For instance, number of 2-g terms which had more that 1 occurances
+texting solution. For instance, number of 2-g terms which had more that 1 occurance
 were `r freq2g`. This could be stored in a file and searched on while users are typing
 to provide predictive answers.
 
