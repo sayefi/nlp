@@ -50,6 +50,12 @@ lapply(con,close)
 summary(lines)[,1]
 
 
+lapply(lapply(lines, object.size),format,units="MB")
+
+format(object.size(lines),units="MB")
+
+lapply(lines, object.size)/1000
+
 line_length<-lapply(lines,nchar)
 
 no_of_lines<-lapply(line_length,sum)
@@ -60,15 +66,27 @@ max_line_length<-lapply(line_length,max)
 
 result_df<-cbind(result_df,max_line_length)
 
+result_df<-cbind(result_df,lapply(lines, object.size),max_line_length)
 result_df
 ## result_df contains the basic summary
 
+a<-lapply(lines, object.size)
+
+a<-as.numeric(a)
+b<-sum(a)
+
+a/b
+
+a<-as.data.frame(file_size)
+as.numeric(a[1])/100
 
 mySample <- function(x,p) {
      sample(x,length(x)*p)
 }
 
 ## 
+
+length(lines[[1]])
 
 set.seed(35546)
 linesSample<-lapply(lines,mySample,0.05)
@@ -99,11 +117,32 @@ dtm <- DocumentTermMatrix(docs)
 
 freq <- colSums(as.matrix(dtm))
 
+length(freq[freq>1])
+a<-melt(freq)
+
+head(a)
+max(a$value)
+hist(a$value,xlim=c(0,10000))
+
+
+g = ggplot(data=a)
+# g = g + geom_density(aes(log10(value)))
+g = g + geom_density(aes(value))
+g
+
+g = ggplot(data=a,aes(y=value))
+g = g + geom_point()
+g
+
 #create sort order (descending)
 ord <- order(freq,decreasing=TRUE)
 
 #inspect most frequently occurring terms
 freq[head(ord)]
+
+plot(freq[ord])
+
+length(freq[freq>10])
 
 # inspect(dtm[1:3,1:1000])
 
