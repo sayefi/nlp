@@ -1,0 +1,404 @@
+---
+title: "Analysis of Corpus text data to build a predictive texting solution"
+author: "Sayef Ishauqe"
+date: "December 30, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Synopsis
+
+This document presents a proposal for developing a predictive texting solution 
+using R and Shiny App. Primarily, it will download and analyze text files to 
+explore its content with for interesting patterns, ideas and challenges to develop
+predictive texting. 
+
+## Download The Data
+
+```{r download_file, message=FALSE, warning=FALSE}
+fileURL<-"https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip"
+inputFile<-"data/SwiftKey.zip"
+en_tw_path<-"data/final/en_US/en_US.twitter.txt"
+
+## check whether the file is already downloaded in project folder
+
+if(!file.exists(en_tw_path))
+{
+     ## Downloading file
+     download.file(fileURL,inputFile,"curl")
+
+     ## Unziping file in data directory
+     unzippedFile<-"data/."
+     unzip(inputFile,exdir=unzippedFile)
+}
+```
+
+## Analyze the content of input files
+The downloaded files contain texts in multiple langulages. The following code
+analyzes content of engish language files. 
+```{r analyze content, message=FALSE, warning=FALSE, cache=TRUE}
+base_path<-"data/final/en_US/"
+filepaths<-paste0(base_path,dir(base_path))
+
+con<-lapply(filepaths,file,open="r")
+lines<-lapply(con,readLines,encoding="UTF-8",skipNul=TRUE)
+a<-lapply(con,close)
+
+line_length<-lapply(lines,nchar)
+no_of_chars<-lapply(line_length,sum)
+no_of_lines<-lapply(line_length,length)
+max_line_length<-lapply(line_length,max)
+file_size<-lapply(lapply(lines, object.size),format,units="MB")
+
+result_df<-data.frame()
+result_df<-cbind(file_names=dir(base_path),no_of_lines,max_line_length,file_size)
+result_df
+
+```
+
+It is evident that there are differences in text content from 3 different sources.
+Also, the size of these files are too large to be analyzed further. So, there needs
+to ba a mechanism to sample the files.
+
+## Take equal sample of files
+```{r sampling, message=FALSE, warning=FALSE}
+sample_no_of_lines_per_file<-round(sum(as.numeric(no_of_lines))*.05/3,0)
+# total_size<-object.size(lines)
+# file_size<-as.numeric(lapply(lines,object.size))
+# file_size_proportion<-file_size/total_size
+
+set.seed(35546)
+
+getLineSample <- function(x,size) {
+     sample(x,size)
+}
+
+linesSample<-lapply(lines,getLineSample,sample_no_of_lines_per_file)
+
+sample_size<- format(object.size(linesSample),units="MB")
+
+
+```
+The above sampling technique takes `r format(sample_no_of_lines_per_file,digits=5)` lines from each
+file and creates sample text of size `r sample_size`.
+
+## Pre-processing of sample data
+At first, the punctuation and non-printable characters has to be removed as those
+can cause the script to terminate abruptly. Once, this is done, more sophiscticated 
+clean-up can be done using pre-built packages.
+
+```{r pre_processing, echo=TRUE, message=FALSE, warning=FALSE, cache=TRUE}
+library(tm)
+mygsub <- function(x,p,r) { 
+     
+     #wrapper function for easy gsub usage in lapply
+     gsub(p,r,x)
+}
+linesClean<-lapply(linesSample,mygsub,"^(https?:\\/\\/)?([\\da-z\\.-]+)\\.([a-z\\.]{2,6})([\\/\\w \\.-]*)*\\/?$"," ")
+linesClean<-lapply(linesClean,mygsub,"\\?\\!",".")
+linesClean<-lapply(linesClean,mygsub,"[^[:print:][:punct:]]"," ")
+
+
+docs<-VCorpus(VectorSource(linesClean))
+
+docs <- tm_map(docs, removeNumbers)
+#remove stopwords using the standard list in tm
+docs <- tm_map(docs, removeWords, stopwords("english"))
+docs <- tm_map(docs, removePunctuation)
+docs <- tm_map(docs, stemDocument, language = c("english"), lazy = TRUE)
+
+```
+
+```{r create_matrix, include=FALSE, cache=TRUE}
+start_time<-Sys.time()
+dtm <- DocumentTermMatrix(docs)
+end_time<-Sys.time()
+time_taken_freq_terms<-end_time-start_time
+
+freq <- colSums(as.matrix(dtm))
+
+freqTerms1<-length(freq[freq>10])
+
+#create sort order (descending)
+ord <- order(freq,decreasing=TRUE)
+
+terms1<-freq[head(ord,freqTerms)]
+
+totalTerm1Occ<-sum(terms1)
+
+terms1_df<-as.data.frame(c("terms","prob"))
+
+# names(terms1)
+terms1_df<-cbind(names(terms1),terms1/totalTerm1Occ)
+
+# dim(terms1_df)
+colnames(terms1_df)<-c("terms1","prob")
+
+# head(terms1_df)
+
+
+
+term1outputFile<-"data/output/term1list.txt"
+con<-file(term1outputFile,"w")
+write.csv(terms1_df,con)
+# writeLines(names(terms1),con)
+close(con)
+
+
+word_matrix<-inspect(dtm[1:3,head(ord,20)])
+
+rownames(word_matrix)<-c("Blogs","News","Twitter")
+```
+
+The frequent terms has been written to a file `r term1outputFile`
+
+## Analyze frequent words
+
+```{r frequent_words, echo=FALSE, message=FALSE, warning=FALSE}
+
+library(reshape2)
+
+word_count_df<-melt(word_matrix)
+
+
+library(ggplot2)
+
+g <- ggplot(data=word_count_df,aes(x=Terms,fill=factor(Docs),y=value))
+g <- g + geom_bar(stat = "identity", position = "stack")
+g<-g+ scale_fill_discrete(name="Sources")
+g<-g+theme( legend.position=c(.9,.8))
+g<-g+labs(x="Frequent Words", y="Number of Occurances")
+g<-g+ggtitle(label="Top 20 frequent words in different sources")
+
+g
+
+```
+
+The above chart identifies frequently used words in the sample text. It is evident
+that the frequencies varies by type of sources. For example, the word the is very
+frequent but not so in twitter as users are required to write twitts within 140 
+characters.
+
+## Analyze n-gram
+A n-gram analysis will provide further insight on predictive texting. However, 
+executing n-gram algorithms can be resource hungry. So, as a preliminary analysis 
+a 2-gram analysis will be executed.
+
+```{r bigram, message=FALSE, warning=FALSE, cache=TRUE, include=FALSE}
+library(slam)
+# install.packages("SnowballC")
+# install.packages("RWeka")
+library(SnowballC)
+library(RWeka)
+
+BigramTokenizer <- function(x) 
+{
+     RWeka::NGramTokenizer(x, RWeka::Weka_control(min=2, max=2))
+}
+
+options(mc.cores=1)
+start_time<-Sys.time()
+dtm.2g <- DocumentTermMatrix(docs, control=list(tokenize=BigramTokenizer))
+end_time<-Sys.time()
+time_taken_2g<-end_time-start_time
+
+# sums.2g <- colapply_simple_triplet_matrix(dtm.docs.2g,FUN=sum)
+# sums.2g <- sort(sums.2g, decreasing=T)
+
+freq2g <- colSums(as.matrix(dtm.2g))
+
+totalFreq2g<-length(freq2g[freq2g>10])
+#create sort order (descending)
+ord <- order(freq2g,decreasing=TRUE)
+
+# freq[head(ord,freq2g)]
+
+terms2g<-freq2g[head(ord,totalFreq2g)]
+
+totalTerm2Occ<-sum(terms2g)
+
+terms2_df<-as.data.frame(c("terms2g","prob"))
+
+terms2_df<-cbind(names(terms2g),terms2g/totalTerm2Occ)
+
+colnames(terms2_df)<-c("terms2g","prob")
+
+head(terms2_df)
+
+term2outputFile<-"data/output/term2list.txt"
+con<-file(term2outputFile,"w")
+write.csv(terms2_df,con)
+# writeLines(names(terms2g),con)
+close(con)
+
+term2g_matrix<-inspect(dtm.2g[1:3,head(ord,25)])
+
+rownames(term2g_matrix)<-c("Blogs","News","Twitter")
+
+```
+
+```{r, echo=FALSE}
+
+term2g_count_df<-melt(term2g_matrix)
+
+
+g <- ggplot(data=term2g_count_df,aes(x=reorder(Terms,value),fill=factor(Docs),y=value))
+g <- g + geom_bar(stat = "identity", position = "stack")
+g<-g+ scale_fill_discrete(name="Sources")
+g<-g+coord_flip()
+g<-g+theme( legend.position=c(.8,.5))
+g<-g+labs(x="Frequent 2g terms", y="Number of Occurances")
+g<-g+ggtitle(label="Top 25 frequent 2-g Terms in different sources")
+
+g
+
+```
+2-Gram terms has been stored in a file as well. Now, let's store 3-gram terms.
+
+```{r trigram, message=FALSE, warning=FALSE, cache=TRUE, include=FALSE}
+
+TrigramTokenizer <- function(x) 
+{
+     RWeka::NGramTokenizer(x, RWeka::Weka_control(min=3, max=3))
+}
+
+options(mc.cores=1)
+start_time<-Sys.time()
+dtm.3g <- DocumentTermMatrix(docs, control=list(tokenize=TrigramTokenizer))
+end_time<-Sys.time()
+time_taken_3g<-end_time-start_time
+
+# sums.2g <- colapply_simple_triplet_matrix(dtm.docs.2g,FUN=sum)
+# sums.2g <- sort(sums.2g, decreasing=T)
+
+freq <- colSums(as.matrix(dtm.3g))
+
+freq3g<-length(freq[freq>5])
+
+
+#create sort order (descending)
+ord <- order(freq,decreasing=TRUE)
+
+terms3g<-freq[head(ord,freq3g)]
+
+# head(terms3g)
+
+totalTerm3Occ<-sum(terms3g)
+
+terms3_df<-as.data.frame(c("terms3g","prob"))
+
+terms3_df<-cbind(names(terms3g),terms3g/totalTerm3Occ)
+
+colnames(terms3_df)<-c("terms3g","prob")
+
+head(terms3_df)
+
+
+term3outputFile<-"data/output/term3list.txt"
+con<-file(term3outputFile,"w")
+# writeLines(names(terms3g),con)
+write.csv(terms3_df,con)
+close(con)
+
+totalTerms<-freqTerms1+totalFreq2g+freq3g
+
+termsCount<-c(freqTerms1,totalFreq2g,freq3g)
+
+termsCountFile<-"data/output/termsCount.txt"
+con<-file(termsCountFile,"w")
+write.csv(termsCount,con)
+close(con)
+
+```
+
+Now lets try 4-g
+
+```{r quadgram, message=FALSE, warning=FALSE, cache=TRUE, include=FALSE}
+
+QuadgramTokenizer <- function(x) 
+{
+     RWeka::NGramTokenizer(x, RWeka::Weka_control(min=4, max=4))
+}
+
+options(mc.cores=1)
+start_time<-Sys.time()
+dtm.4g <- DocumentTermMatrix(docs, control=list(tokenize=QuadgramTokenizer))
+end_time<-Sys.time()
+time_taken_4g<-end_time-start_time
+
+# sums.2g <- colapply_simple_triplet_matrix(dtm.docs.2g,FUN=sum)
+# sums.2g <- sort(sums.2g, decreasing=T)
+
+freq <- colSums(as.matrix(dtm.4g))
+
+freq4g<-length(freq[freq>2])
+#create sort order (descending)
+ord <- order(freq,decreasing=TRUE)
+
+# freq[head(ord,freq4g)]
+
+terms4g<-freq[head(ord,freq4g)]
+term4outputFile<-"data/output/term4.txt"
+con<-file(term4outputFile,"w")
+writeLines(names(terms4g),con)
+# write.csv(names(terms4g),con)
+close(con)
+```
+
+Let's try 5-g
+
+```{r quadgram, message=FALSE, warning=FALSE, cache=TRUE, include=FALSE}
+
+FivegramTokenizer <- function(x) 
+{
+     RWeka::NGramTokenizer(x, RWeka::Weka_control(min=5, max=5))
+}
+
+options(mc.cores=1)
+start_time<-Sys.time()
+dtm.5g <- DocumentTermMatrix(docs, control=list(tokenize=FivegramTokenizer))
+end_time<-Sys.time()
+time_taken_5g<-end_time-start_time
+
+# sums.2g <- colapply_simple_triplet_matrix(dtm.docs.2g,FUN=sum)
+# sums.2g <- sort(sums.2g, decreasing=T)
+
+freq <- colSums(as.matrix(dtm.5g))
+
+freq5g<-length(freq[freq>2])
+#create sort order (descending)
+ord <- order(freq,decreasing=TRUE)
+
+# freq[head(ord,freq5g)]
+
+terms5g<-freq[head(ord,freq5g)]
+term5outputFile<-"data/output/term5.txt"
+con<-file(term5outputFile,"w")
+writeLines(names(terms5g),con)
+close(con)
+```
+
+
+## Conclusion and Next steps
+At this point, it is evident that the approach taken to develop a list of frequent
+terms and 2-g terms can be followed to prepare a predictive texting solution.
+
+- The pre-processing and sampling apprach taken works to analyze freqent words and
+2-g terms. For sample size `r sample_size`, it took `r round(time_taken_freq_terms,2)` mins to 
+generate frequent terms and `r round(time_taken_2g,2)` mins for 2-g terms respectively.
+
+- Number of frequent and 2-g terms identified could be used to develop the predictive
+texting solution. For instance, number of 2-g terms which had more that 1 occurance
+were `r freq2g`. This could be stored in a file and searched on while users are typing
+to provide predictive answers.
+
+### Next steps
+- Develop a strategy to handle miss-spelled words
+- Check if 3-gram and/or 4-gram terms can be identified similarly for predictive texting
+- Develop a solution to store the n-grams and frequent terms in a file(s) for future use
+- Check whether developing different terms/n-grams for blogging, twitting makes better sense
+- Evaluate the approach in terms of memory requirements
+- Develop a shiny app based on the above analysis and steps
