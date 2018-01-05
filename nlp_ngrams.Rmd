@@ -106,9 +106,9 @@ docs<-VCorpus(VectorSource(linesClean))
 
 docs <- tm_map(docs, removeNumbers)
 #remove stopwords using the standard list in tm
-docs <- tm_map(docs, removeWords, stopwords("english"))
+# docs <- tm_map(docs, removeWords, stopwords("english"))
 docs <- tm_map(docs, removePunctuation)
-docs <- tm_map(docs, stemDocument, language = c("english"), lazy = TRUE)
+# docs <- tm_map(docs, stemDocument, language = c("english"), lazy = TRUE)
 
 ```
 
