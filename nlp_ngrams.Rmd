@@ -125,17 +125,17 @@ freqTerms1<-length(freq[freq>10])
 #create sort order (descending)
 ord <- order(freq,decreasing=TRUE)
 
-terms1<-freq[head(ord,freqTerms)]
+terms1<-freq[head(ord,freqTerms1)]
 
 totalTerm1Occ<-sum(terms1)
 
-terms1_df<-as.data.frame(c("terms","prob"))
+terms1_df<-as.data.frame(c("terms","freq"))
 
 # names(terms1)
-terms1_df<-cbind(names(terms1),terms1/totalTerm1Occ)
+terms1_df<-cbind(names(terms1),terms1)
 
 # dim(terms1_df)
-colnames(terms1_df)<-c("terms1","prob")
+colnames(terms1_df)<-c("terms1","freq")
 
 # head(terms1_df)
 
@@ -210,7 +210,7 @@ time_taken_2g<-end_time-start_time
 
 freq2g <- colSums(as.matrix(dtm.2g))
 
-totalFreq2g<-length(freq2g[freq2g>10])
+totalFreq2g<-length(freq2g[freq2g>1])
 #create sort order (descending)
 ord <- order(freq2g,decreasing=TRUE)
 
@@ -220,11 +220,11 @@ terms2g<-freq2g[head(ord,totalFreq2g)]
 
 totalTerm2Occ<-sum(terms2g)
 
-terms2_df<-as.data.frame(c("terms2g","prob"))
+terms2_df<-as.data.frame(c("terms2g","freq"))
 
-terms2_df<-cbind(names(terms2g),terms2g/totalTerm2Occ)
+terms2_df<-cbind(names(terms2g),terms2g)
 
-colnames(terms2_df)<-c("terms2g","prob")
+colnames(terms2_df)<-c("terms2g","freq")
 
 head(terms2_df)
 
@@ -276,7 +276,7 @@ time_taken_3g<-end_time-start_time
 
 freq <- colSums(as.matrix(dtm.3g))
 
-freq3g<-length(freq[freq>5])
+freq3g<-length(freq[freq>1])
 
 
 #create sort order (descending)
@@ -288,11 +288,11 @@ terms3g<-freq[head(ord,freq3g)]
 
 totalTerm3Occ<-sum(terms3g)
 
-terms3_df<-as.data.frame(c("terms3g","prob"))
+terms3_df<-as.data.frame(c("terms3g","freq"))
 
-terms3_df<-cbind(names(terms3g),terms3g/totalTerm3Occ)
+terms3_df<-cbind(names(terms3g),terms3g)
 
-colnames(terms3_df)<-c("terms3g","prob")
+colnames(terms3_df)<-c("terms3g","freq")
 
 head(terms3_df)
 
@@ -305,12 +305,7 @@ close(con)
 
 totalTerms<-freqTerms1+totalFreq2g+freq3g
 
-termsCount<-c(freqTerms1,totalFreq2g,freq3g)
 
-termsCountFile<-"data/output/termsCount.txt"
-con<-file(termsCountFile,"w")
-write.csv(termsCount,con)
-close(con)
 
 ```
 
@@ -334,17 +329,39 @@ time_taken_4g<-end_time-start_time
 
 freq <- colSums(as.matrix(dtm.4g))
 
-freq4g<-length(freq[freq>2])
+# freq4g<-length(freq[freq>1])
+freq4g<-length(freq)
 #create sort order (descending)
 ord <- order(freq,decreasing=TRUE)
 
 # freq[head(ord,freq4g)]
 
 terms4g<-freq[head(ord,freq4g)]
-term4outputFile<-"data/output/term4.txt"
+totalTerm4Occ<-sum(terms4g)
+
+
+terms4_df<-as.data.frame(c("terms4g","freq"))
+
+terms4_df<-cbind(names(terms4g),terms4g)
+
+colnames(terms4_df)<-c("terms4g","freq")
+
+head(terms4_df)
+
+term4outputFile<-"data/output/term4list.txt"
 con<-file(term4outputFile,"w")
-writeLines(names(terms4g),con)
-# write.csv(names(terms4g),con)
+# writeLines(names(terms4g),con)
+write.csv(terms4_df,con)
+close(con)
+
+
+# termsCount<-c(freqTerms1,totalFreq2g,freq3g)
+
+termsCount<-c(totalTerm1Occ,totalTerm2Occ,totalTerm3Occ,totalTerm4Occ)
+
+termsCountFile<-"data/output/termsCount.txt"
+con<-file(termsCountFile,"w")
+write.csv(termsCount,con)
 close(con)
 ```
 

@@ -1,0 +1,481 @@
+---
+title: "Predictive texting using n-grams"
+author: "Sayef Ishauqe"
+date: "December 31, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Loading N-gram files / terms
+
+
+```{r loading_ngrams}
+
+ngram_paths<-"data/output/"
+# dir(ngram_paths)
+filepaths<-paste0(ngram_paths,dir(ngram_paths))
+
+con<-lapply(filepaths,file,open="r")
+con[1]
+con1<-file("data/output/term1list.txt")
+ngram1<-read.csv(con1,stringsAsFactors = F)
+# close(con1)
+
+con2<-file("data/output/term2list.txt")
+ngram2<-read.csv(con2,stringsAsFactors = F)
+# close(con2)
+
+con3<-file("data/output/term3list.txt")
+ngram3<-read.csv(con3,stringsAsFactors = F)
+# close(con3)
+
+
+con4<-file("data/output/term4list.txt")
+ngram4<-read.csv(con3,stringsAsFactors = F)
+# close(con4)
+
+con5<-file("data/output/termsCount.txt")
+termsCount<-read.csv(con5,stringsAsFactors = F)
+
+str(ngram1)
+termsCount
+# ngrams<-lapply(con,read.csv2)
+
+# lines[4]<-read.csv2(file(filepaths[4]))
+# 
+# lines[4]
+# 
+# ts<-as.data.frame(lines[4])
+# a<-lapply(lines,rbind)
+# a[1]
+# t<-do.call(rbind,lines)
+
+# a<-lapply(con,close)
+# 
+# ng<-unlist(ngrams)
+# ngrams[2][1]
+```
+
+## Taking and cleaning input
+The following code collects input and create tokens.
+
+```{r input, echo=FALSE}
+library(tm)
+library("RWeka")
+library(RWekajars)
+
+library(varhandle)
+library(dplyr)
+
+mygsub <- function(x,p,r) { 
+     
+     #wrapper function for easy gsub usage in lapply
+     gsub(p,r,x)
+}
+
+txt <- readline(prompt="Enter Text: ")
+# txt<-"The guy in front of me just bought a pound of bacon, a bouquet, and a case of"
+
+txtClean<-lapply(txt,mygsub,"^(https?:\\/\\/)?([\\da-z\\.-]+)\\.([a-z\\.]{2,6})([\\/\\w \\.-]*)*\\/?$"," ")
+txtClean<-lapply(txtClean,mygsub,"\\?\\!",".")
+txtClean<-lapply(txtClean,mygsub,"[^[:print:][:punct:]]"," ")
+
+docs<-VCorpus(VectorSource(txtClean))
+
+docs <- tm_map(docs, removeNumbers)
+docs <- tm_map(docs, tolower)
+#remove stopwords using the standard list in tm
+# docs <- tm_map(docs, removeWords, stopwords("english"))
+docs <- tm_map(docs, removePunctuation)
+# docs <- tm_map(docs, stemDocument, language = c("english"), lazy = TRUE)
+
+tokens<-NGramTokenizer(docs, Weka_control(min = 1, max = 1))
+
+length(tokens)
+
+library(stringr)
+lastToken<-tokens[length(tokens)]
+if(length(tokens)>1) prev1Token<-tokens[length(tokens)-1]
+if(length(tokens)>2) prev2Token<-tokens[length(tokens)-2]
+
+tokens
+
+res_df<-data.frame(terms=factor(),freq=double(),stringsAsFactors = FALSE)
+
+if(length(tokens)>2)
+{
+     # try with 4 grams
+     head(ngram4$terms4g)
+     resLines<-grep(paste0("^",prev2Token," ",prev1Token," ", lastToken),ngram4$terms4g)
+     
+     
+     
+     if(length(resLines)>0)
+     {
+          resLines
+     
+          ngram4[resLines,2]
+          # ngram4[resLines,]
+          
+          
+          res4_df<-cbind(word(ngram4[resLines,2],-1),ngram4[resLines,3])
+          
+          head(res4_df)
+          
+          str(res4_df[,2])
+          totalMatch<-sum(as.double(res4_df[,2]))
+          
+          res4_df[,2]<-as.double(res4_df[,2])/totalMatch
+          
+          head(res4_df)
+          
+          res_df<-rbind(res_df,res4_df)
+          
+          res_df
+          str(res_df)
+     }
+}
+
+if(length(tokens)>1)
+{
+     # try with 3 grams
+     head(ngram3$terms3g)
+     resLines<-grep(paste0("^",prev1Token," ", lastToken),ngram3$terms3g)
+     resLines
+     
+     ngram3[resLines,2]
+     ngram3[resLines,]
+     
+ 
+     
+     res3_df<-cbind(word(ngram3[resLines,2],-1),ngram3[resLines,3])
+     
+     totalMatch<-sum(as.double(res3_df[,2]))
+     
+     res3_df[,2]<-as.double(res3_df[,2])/totalMatch*.4
+     
+     res_df<-rbind(res_df,res3_df)
+     
+     res_df
+     
+     
+}
+
+
+     # now look at the 2-grams
+     head(ngram2$terms2g)
+     resLines<-grep(paste0("^",lastToken),ngram2$terms2g)
+     # resLines
+     
+     # total number of match found
+     length(resLines)
+     
+     head(ngram2[resLines,],10)
+     
+     
+     res2_df<-cbind(word(ngram2[resLines,2],-1),ngram2[resLines,3])
+     
+     head(res2_df)
+     
+     totalMatch<-sum(as.double(res2_df[,2]))
+     
+     res2_df[,2]<-as.double(res2_df[,2])/totalMatch*.4*.4
+     
+     res_df<-rbind(res_df,res2_df)
+     
+     head(res_df,20)
+     
+     
+     # now add frequency of words
+     
+     if(length(res_df)==0)
+     {
+          res1_df<-head(ngram1[,2:3],10)
+            
+          
+     }else 
+     {
+          resLines<-ngram1[,1] %in% res_df[,1]
+          
+          res1_df<-ngram1[resLines,2:3]
+          
+          # ngram1[ngram1[,1] in c("world","the"),]
+          # 
+          # ngram1[ngram1[,1]==res_df[,1],2:3]
+          # 
+          # res1_df<-NULL
+          # for( i in 1:min(length(res_df),10))
+          # {
+          #      # i<-1
+          #      resLines<-grep(res_df[i,1],ngram1$terms1)
+          #      res1_df<-rbind(res1_df,ngram1[resLines,2:3])
+          #      
+          # }
+          # 
+          # head(res1_df,100)
+     }
+     
+     totalMatch<-sum(as.double(res1_df[,2]))
+     
+     res1_df[,2]<-as.double(res1_df[,2])/totalMatch*.4*.4*.4
+     
+     # res1_df$freq<-res1_df$freq/termsCount[1,2]*.4*.4*.4
+     
+     res1_df_m<-cbind(res1_df[,1], res1_df[,2])
+     
+     # names(res1_df)<-c("V1","V2")
+     str(res1_df_m)
+     res_df<-rbind(res_df,res1_df_m)
+     
+     head(res_df,20)
+     str(res_df)
+     
+     # names(res_df)<-c("terms","freq")
+     
+     head(res_df[,1])
+     
+     
+     str(res_df)
+     
+     
+     res_df[,2]<-unfactor(res_df[,2])
+     
+     res_df[,2]<-as.numeric(res_df[,2])
+     
+     
+     names(res_df)<-c("terms","freq")
+     
+     c_res_df<-res_df
+     
+     res_df<-group_by(res_df,terms)
+     
+     res_df<-summarize(res_df,freq=sum(freq))
+     
+     res_df<-arrange(res_df,-freq)
+     
+     # res_df<-head(res_df,10)
+     
+     res_df
+     
+     # result_df<-as.data.frame(as.factor(res_df[,1]))
+     # 
+     # result_df<-cbind(result_df,as.numeric(res_df[,2]))
+     # 
+     # names(result_df)<-c("terms","freq")
+     # 
+     # str(result_df)
+     # 
+     # 
+     # result_df<-group_by(result_df,terms)
+     # 
+     # result_df<-summarize(result_df,freq=sum(freq))
+     # 
+     # head(result_df)
+     # 
+     # result_df<-arrange(result_df,-freq)
+     # 
+     # head(result_df)
+
+
+```
+
+```{r}
+
+
+
+token<-tokens[length(tokens)]
+
+tokens
+
+# ngram1$terms1
+# 
+# a<-grep(token,ngram1$terms1)
+# 
+# ngram1[a,]
+
+result_df<-data.frame(terms=factor(),prob=numeric(),stringsAsFactors = FALSE)
+
+# result_df<-rbind(terms=ngram1[1:5,2],prob=ngram1[1:5,3])
+# 
+# str(result_df)
+# ngram2$terms2g
+
+b<-grep(paste0("^",token," "),ngram2$terms2g)
+
+res2g<-head(substr(ngram2[b,2],nchar(token)+2,length(ngram2[b,2])),10)
+
+str(ngram2[b,3])
+
+
+# result_df<-rbind(c(res2g, ngram2[b,3]*2))
+
+# res<-cbind(terms=res2g,prob=head(ngram2[b,3]*10^4,10))
+
+result_df<-rbind(result_df,cbind(terms=res2g,prob=head(ngram2[b,3]*10^4,10)))
+
+
+head(result_df)
+str(result_df)
+# ngram3$terms3g
+
+# tokenPrev<-"i"
+
+c<-grep(paste0("^",tokenPrev," ",token),ngram3$terms3g)
+
+ngram3[c,]
+
+
+
+
+res3g<-substr(ngram3[c,2],nchar(token)+nchar(tokenPrev)+3,nchar(ngram3[c,2]))
+
+
+
+str(result_df)
+result_df<-rbind(result_df,cbind(terms=res3g, prob=ngram3[c,3]*10^7))
+result_df
+
+
+
+
+res1g<-ngram1[1:5,2:3]
+
+result_df<-rbind(result_df,cbind(terms=res1g$terms1, prob=res1g$prob))
+
+# install.packages("varhandle")
+
+result_df$prob<-unfactor(result_df$prob)
+
+
+
+result_df<-group_by(result_df,terms)
+
+result_df<-summarize(result_df,probs=sum(prob))
+
+result_df<-arrange(result_df,-probs)
+
+head(result_df)
+
+```
+
+
+```{r}
+
+
+result_df[,2]
+sort(result_df)
+result_df<-result_df[order(result_df[,2],decreasing = TRUE),]
+result_df[order(result_df$prob,decreasing = TRUE)]
+
+ngrams2<-unlist(ngrams)
+grep(token,ngram1[2],value=T)
+
+str(ngram1[2])
+
+lines_txt<-lapply(lines,unlist)
+
+lines[2]
+
+## 3 token match in 4-gram
+i=3
+t<-length(tokens)-i+1
+
+searchToken<-""
+for (j in t:length(tokens))
+{
+     j
+     searchToken<-paste(searchToken,tokens[j],sep=" ")
+}
+
+searchToken
+
+searchToken="i feel"
+
+
+a<-unlist(lines[4])
+
+grep("^know",a,value=T)
+
+grep(searchToken,a,value=T)
+
+## 2 token match in 4-gram
+i=3
+t<-length(tokens)-i+1
+
+searchToken<-""
+for (j in t:length(tokens))
+{
+     j
+     searchToken<-paste(searchToken,tokens[j],sep=" ")
+}
+
+searchToken
+
+searchToken="i feel"
+
+
+a<-unlist(lines[4])
+
+grep("^know",a,value=T)
+
+grep(searchToken,a,value=T)
+
+## 1 token match in 1-gram
+
+searchToken<-paste0("^",tokens[length(tokens)]," ")
+
+
+a<-unlist(lines[2])
+
+grep("^know",a,value=T)
+
+res<-head(grep(searchToken,a,value=T),10)
+library(stringr)
+word(res,-1)
+
+unlist(strsplit(res[1]," "))[2]
+
+lapply(lapply(res,strsplit," "),unlist)[[2]]
+
+res2<-lapply(res,strsplit," ")
+
+
+as.vector(lines[3])
+a[10]
+grep("know *",as.vector(lines[3]),value=TRUE)
+grepl("know *",lines[3][])
+a<-regexpr("know *",lines[3],perl=TRUE)
+lines[3]
+a
+gsub("know *",lines[3])
+
+matches<-grep(paste("^",searchToken," *"),lines[4],value=T)
+matches
+
+lines[4][1]
+
+grep("feel",lines[4],value=T)
+
+for (i in 3:1)
+{
+     if(length(tokens)==i) next
+     
+     # i=3
+     
+     t<-length(tokens)-i+1
+     
+     paste(tokens[5], tokens[6], sep=" ")
+     searchToken<-paste(tokens[t:length(tokens)],sep=" ")
+     
+     lapply(searchToken,paste," ")
+     
+     grep(lines[4],searchToken)
+          
+}
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
