@@ -34,14 +34,21 @@ ngram3<-read.csv(con3,stringsAsFactors = F)
 
 
 con4<-file("data/output/term4list.txt")
-ngram4<-read.csv(con3,stringsAsFactors = F)
+ngram4<-read.csv(con4,stringsAsFactors = F)
 # close(con4)
 
-con5<-file("data/output/termsCount.txt")
-termsCount<-read.csv(con5,stringsAsFactors = F)
+con5<-file("data/output/term5list.txt")
+ngram5<-read.csv(con5,stringsAsFactors = F)
 
-str(ngram1)
-termsCount
+con6<-file("data/output/term6list.txt")
+ngram6<-read.csv(con6,stringsAsFactors = F)
+
+
+# con5<-file("data/output/termsCount.txt")
+# termsCount<-read.csv(con5,stringsAsFactors = F)
+# 
+# str(ngram1)
+# termsCount
 # ngrams<-lapply(con,read.csv2)
 
 # lines[4]<-read.csv2(file(filepaths[4]))
@@ -109,8 +116,9 @@ if(length(tokens)>2)
 {
      # try with 4 grams
      head(ngram4$terms4g)
-     resLines<-grep(paste0("^",prev2Token," ",prev1Token," ", lastToken),ngram4$terms4g)
+     resLines<-grep(paste0("^",prev2Token," ",prev1Token," ", lastToken," "),ngram4$terms4g)
      
+     # resLines<-grep(paste0(prev2Token," ",prev1Token," ", lastToken),ngram4$terms4g)
      
      
      if(length(resLines)>0)
@@ -143,31 +151,34 @@ if(length(tokens)>1)
 {
      # try with 3 grams
      head(ngram3$terms3g)
-     resLines<-grep(paste0("^",prev1Token," ", lastToken),ngram3$terms3g)
-     resLines
+     resLines<-grep(paste0("^",prev1Token," ", lastToken," "),ngram3$terms3g)
      
-     ngram3[resLines,2]
-     ngram3[resLines,]
+     if(length(resLines)>0)
+     {
+          resLines
+     
+          ngram3[resLines,2]
+          ngram3[resLines,]
      
  
      
-     res3_df<-cbind(word(ngram3[resLines,2],-1),ngram3[resLines,3])
+          res3_df<-cbind(word(ngram3[resLines,2],-1),ngram3[resLines,3])
      
-     totalMatch<-sum(as.double(res3_df[,2]))
+          totalMatch<-sum(as.double(res3_df[,2]))
      
-     res3_df[,2]<-as.double(res3_df[,2])/totalMatch*.4
+          res3_df[,2]<-as.double(res3_df[,2])/totalMatch*.4
      
-     res_df<-rbind(res_df,res3_df)
+          res_df<-rbind(res_df,res3_df)
      
-     res_df
-     
+          res_df
+     }
      
 }
 
 
      # now look at the 2-grams
      head(ngram2$terms2g)
-     resLines<-grep(paste0("^",lastToken),ngram2$terms2g)
+     resLines<-grep(paste0("^",lastToken," "),ngram2$terms2g)
      # resLines
      
      # total number of match found

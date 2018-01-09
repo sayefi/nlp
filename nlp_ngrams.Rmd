@@ -80,6 +80,9 @@ linesSample<-lapply(lines,getLineSample,sample_no_of_lines_per_file)
 
 sample_size<- format(object.size(linesSample),units="MB")
 
+rm(lines)
+rm(line_length)
+
 
 ```
 The above sampling technique takes `r format(sample_no_of_lines_per_file,digits=5)` lines from each
@@ -106,15 +109,20 @@ docs<-VCorpus(VectorSource(linesClean))
 
 docs <- tm_map(docs, removeNumbers)
 #remove stopwords using the standard list in tm
-# docs <- tm_map(docs, removeWords, stopwords("english"))
+
 docs <- tm_map(docs, removePunctuation)
 # docs <- tm_map(docs, stemDocument, language = c("english"), lazy = TRUE)
+docs_rm_stop <- tm_map(docs, removeWords, stopwords("english"))
+
+rm(linesClean)
+rm(linesSample)
+
 
 ```
 
 ```{r create_matrix, include=FALSE, cache=TRUE}
 start_time<-Sys.time()
-dtm <- DocumentTermMatrix(docs)
+dtm <- DocumentTermMatrix(docs_rm_stop)
 end_time<-Sys.time()
 time_taken_freq_terms<-end_time-start_time
 
@@ -201,16 +209,18 @@ BigramTokenizer <- function(x)
 
 options(mc.cores=1)
 start_time<-Sys.time()
-dtm.2g <- DocumentTermMatrix(docs, control=list(tokenize=BigramTokenizer))
+dtm.2g <- DocumentTermMatrix(docs_rm_stop, control=list(tokenize=BigramTokenizer))
 end_time<-Sys.time()
 time_taken_2g<-end_time-start_time
+
+rm(docs_rm_stop)
 
 # sums.2g <- colapply_simple_triplet_matrix(dtm.docs.2g,FUN=sum)
 # sums.2g <- sort(sums.2g, decreasing=T)
 
 freq2g <- colSums(as.matrix(dtm.2g))
 
-totalFreq2g<-length(freq2g[freq2g>1])
+totalFreq2g<-length(freq2g[freq2g>2])
 #create sort order (descending)
 ord <- order(freq2g,decreasing=TRUE)
 
@@ -354,6 +364,10 @@ con<-file(term4outputFile,"w")
 write.csv(terms4_df,con)
 close(con)
 
+# save(terms4_df,file="data/output/ngram.4.RData")
+
+# rownames(terms4_df)<-NULL
+# saveRDS(terms4_df,file="data/output/ngram.4.RData")
 
 # termsCount<-c(freqTerms1,totalFreq2g,freq3g)
 
@@ -363,27 +377,84 @@ termsCountFile<-"data/output/termsCount.txt"
 con<-file(termsCountFile,"w")
 write.csv(termsCount,con)
 close(con)
+
+
+
 ```
 
 Let's try 5-g
 
 ```{r quadgram, message=FALSE, warning=FALSE, cache=TRUE, include=FALSE}
 
-FivegramTokenizer <- function(x) 
+PentagramTokenizer <- function(x) 
 {
      RWeka::NGramTokenizer(x, RWeka::Weka_control(min=5, max=5))
 }
 
+
+
 options(mc.cores=1)
 start_time<-Sys.time()
-dtm.5g <- DocumentTermMatrix(docs, control=list(tokenize=FivegramTokenizer))
+dtm.5g <- DocumentTermMatrix(docs, control=list(tokenize=PentagramTokenizer))
 end_time<-Sys.time()
 time_taken_5g<-end_time-start_time
+
+
+getFreq<-function(tdm,minFreq)
+{
+     freq <- colSums(as.matrix(tdm))
+     termCount<-length(freq[freq>minFreq])
+     ord <- order(freq,decreasing=TRUE)
+     termsFreq<-freq[head(ord,termCount)]
+     
+     terms_df<-cbind(names(termsFreq),termsFreq)
+     colnames(terms_df)<-c("terms","freq")
+     rownames(terms_df)<-NULL
+     terms_df
+     
+}
+
+
+terms5_df<-getFreq(dtm.5g,2)
+
+head(terms5_df)
+
+save(terms5_df,file="data/output/ngram.5.RData")
+
+
+HexagramTokenizer <- function(x) 
+{
+     RWeka::NGramTokenizer(x, RWeka::Weka_control(min=6, max=6))
+}
+
+gc()
+options(mc.cores=1)
+start_time<-Sys.time()
+dtm.6g <- DocumentTermMatrix(docs, control=list(tokenize=HexagramTokenizer))
+end_time<-Sys.time()
+time_taken_5g<-end_time-start_time
+
+terms6_df<-getFreq(dtm.6g,2)
+
+head(terms6_df)
+
+save(terms6_df,file="data/output/ngram.6.RData")
+
 
 # sums.2g <- colapply_simple_triplet_matrix(dtm.docs.2g,FUN=sum)
 # sums.2g <- sort(sums.2g, decreasing=T)
 
-freq <- colSums(as.matrix(dtm.5g))
+con<-file("data/output/term5list.txt","w")
+write.csv(terms5_df,con)
+# writeLines(names(terms5g),con)
+close(con)
+
+con<-file("data/output/term6list.txt","w")
+write.csv(terms6_df,con)
+# writeLines(names(terms5g),con)
+close(con)
+
+
 
 freq5g<-length(freq[freq>2])
 #create sort order (descending)
