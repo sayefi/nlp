@@ -415,7 +415,7 @@ getFreq<-function(tdm,minFreq)
 }
 
 
-terms5_df<-getFreq(dtm.5g,2)
+terms5_df<-getFreq(dtm.5g,0)
 
 head(terms5_df)
 
