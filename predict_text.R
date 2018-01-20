@@ -1,4 +1,6 @@
+library(dplyr)
 library(stringr)
+library(stringi)
 library(tm)
 library("RWeka")
 library(RWekajars)
@@ -17,14 +19,55 @@ getTokens<-function(input)
      # docs <- tm_map(docs, stemDocument, language = c("english"), lazy = TRUE)
      
      tokens<-NGramTokenizer(docs, Weka_control(min = 1, max = 1))
+     
+     tokens[tokens %in% ngram$nextToken]
 }
 
-# nrow(nv)
-nv<-group_by(ngram,type)
-# nv
-v<-summarise(nv,vc=n())
-V<-v$vc
-V
+input<-inputTxt
+getTokens_3<-function(input,option)
+{
+     
+     docs<-VCorpus(VectorSource(input))
+     
+     docs <- tm_map(docs, removeNumbers)
+     #remove stopwords using the standard list in tm
+     if(option==1)
+     {
+          docs_ <- tm_map(docs, removeWords, stopwords("english"))     
+     }
+     
+     docs <- tm_map(docs, removePunctuation)
+     
+     if(option==2)
+     {
+          docs <- tm_map(docs, stemDocument, language = c("english"), lazy = TRUE)     
+     }
+     
+     if(option==3)
+     {
+          docs <- tm_map(docs, removeWords, stopwords("english"))
+          docs <- tm_map(docs, stemDocument, language = c("english"), lazy = TRUE)
+          
+     }
+     
+     tokens<-NGramTokenizer(docs, Weka_control(min = 1, max = 1))
+}
+
+getTokens_v2<-function(input)
+{
+     input<-stri_trans_tolower(input)
+     docs<-VCorpus(VectorSource(input))
+     
+     docs <- tm_map(docs, removeNumbers)
+     # docs <- tm_map(docs, tolower)
+     # docs <- tm_map(docs, removeWords, stopwords)
+     docs <- tm_map(docs, removePunctuation)
+     docs <- tm_map(docs, stemDocument, language = c("english"))
+     
+     tokens<-NGramTokenizer(docs, Weka_control(min = 1, max = 1))
+}
+
+
 
 predict_text_backoff<-function(tokens)
 {
@@ -73,8 +116,132 @@ predict_text_linear<-function(tokens,lambda)
 {
      
      result<-data.frame()
+
+     for(i in min(length(tokens),4-1):1)
+     {
+          print(paste("Lets check with word(s):",i))
+          
+          searchToken<-""
+          for(j in (length(tokens)-i+1):(length(tokens)))
+          {
+               # print(j)
+               searchToken<-paste0(searchToken,tokens[j]," ")
+               
+          }
+          
+          searchToken<-trimws(searchToken)
+          
+          print(paste("Search Token:",searchToken))
+          
+          res_df<-head(ngram[ngram$prevToken==searchToken,],5)
+          
+          print(res_df)
+          
+          
+          
+          if(dim(res_df)[1]>1)
+          {
+               res_df$prob<-res_df$freq/sum(res_df$freq)*lambda[i+1]
+               result<-rbind(result,cbind(res_df[,c("prevToken","nextToken","prob")]))
+               
+               
+          }
+          
+          
+     }
      
-     for(i in min(length(tokens),6-1):1)
+     ## Making some change at Jan 13, 3:48 PM
+     ## what about add all 1-grams
+     
+     # if(dim(result)[1]>0)
+     # {
+     #      res_df<-filter(ngram, type==1,nextToken %in% result$nextToken)
+     # }else
+     # {
+     #      res_df<-filter(ngram,type==1)
+     # }
+     
+     res_df<-filter(ngram,type==1)
+     res_df$prob<-res_df$freq/sum(res_df$freq)*lambda[1]
+     result<-rbind(result,cbind(res_df[,c("prevToken","nextToken","prob")]))
+     
+     # 
+     result<-group_by(result,nextToken)
+     result<-summarize(result,prob=sum(prob))
+     result<-arrange(result,desc(prob))
+     
+     
+}
+
+
+predict_text_linear_stemmed<-function(tokens,lambda)
+{
+     
+     result<-data.frame()
+     
+     for(i in min(length(tokens),4-1):1)
+     {
+          print(paste("Lets check with word(s):",i))
+          
+          searchToken<-""
+          for(j in (length(tokens)-i+1):(length(tokens)))
+          {
+               # print(j)
+               searchToken<-paste0(searchToken,tokens[j]," ")
+               
+          }
+          
+          searchToken<-trimws(searchToken)
+          
+          print(paste("Search Token:",searchToken))
+          
+          res_df<-head(ngram[ngram$prevToken==searchToken,],5)
+          
+          print(res_df)
+          
+          
+          
+          if(dim(res_df)[1]>1)
+          {
+               res_df$prob<-res_df$freq/sum(res_df$freq)*lambda[i+1]
+               result<-rbind(result,cbind(res_df[,c("prevToken","nextToken","prob")]))
+               
+               
+          }
+          
+          
+     }
+     
+     ## Making some change at Jan 13, 3:48 PM
+     ## what about add all 1-grams
+     
+     # if(dim(result)[1]>0)
+     # {
+     #      res_df<-filter(ngram, type==1,nextToken %in% result$nextToken)
+     # }else
+     # {
+     #      res_df<-filter(ngram,type==1)
+     # }
+     
+     res_df<-filter(ngram,type==1)
+     res_df$prob<-res_df$freq/sum(res_df$freq)*lambda[1]
+     result<-rbind(result,cbind(res_df[,c("prevToken","nextToken","prob")]))
+     
+     # 
+     # result<-group_by(result,nextToken)
+     # result<-summarize(result,prob=sum(prob))
+     # result<-arrange(result,desc(prob))
+     
+     
+}
+
+
+predict_text_linear_v4<-function(tokens,lambda)
+{
+     
+     result<-data.frame()
+     i<-2
+     for(i in min(length(tokens),4-1):1)
      {
           print(paste("Lets check with word(s):",i))
           
@@ -98,6 +265,133 @@ predict_text_linear<-function(tokens,lambda)
           
           if(dim(res_df)[1]>1)
           {
+               res_df$prob<-res_df$freq/sum(res_df$freq)*lambda[i+1]
+               result<-rbind(result,cbind(res_df[,c("prevToken","nextToken","prob")]))
+               
+               
+          }
+          
+          ## skip-gram
+          ## with 3-gram skip the middle word
+          if(i==2)
+          {
+               searchToken<-paste(tokens[length(tokens)-2],tokens[length(tokens)])
+               # searchToken<-trimws(searchToken)
+               print(paste("Search Token:",searchToken))
+               
+               res_df<-ngram[ngram$prevToken==searchToken,]
+               
+               print(res_df)
+               if(dim(res_df)[1]>1)
+               {
+                    res_df$prob<-res_df$freq/sum(res_df$freq)*lambda[i+1]
+                    result<-rbind(result,cbind(res_df[,c("prevToken","nextToken","prob")]))
+                    
+                    
+               }
+               
+          }
+          ## with 2-gram 
+          if(i==1)
+          {
+               #skip the last word
+               searchToken<-tokens[length(tokens)-1]
+               # searchToken<-trimws(searchToken)
+               print(paste("Search Token:",searchToken))
+               
+               res_df<-ngram[ngram$prevToken==searchToken,]
+               
+               print(res_df)
+               if(dim(res_df)[1]>1)
+               {
+                    res_df$prob<-res_df$freq/sum(res_df$freq)*lambda[i+1]
+                    result<-rbind(result,cbind(res_df[,c("prevToken","nextToken","prob")]))
+                    
+                    
+               }
+               
+               #skip last 2 workds
+               searchToken<-tokens[length(tokens)-2]
+               # searchToken<-trimws(searchToken)
+               print(paste("Search Token:",searchToken))
+               
+               res_df<-ngram[ngram$prevToken==searchToken,]
+               
+               print(res_df)
+               if(dim(res_df)[1]>1)
+               {
+                    res_df$prob<-res_df$freq/sum(res_df$freq)*lambda[i+1]
+                    result<-rbind(result,cbind(res_df[,c("prevToken","nextToken","prob")]))
+                    
+                    
+               }
+               
+          }
+          
+     }
+     
+     ## Making some change at Jan 13, 3:48 PM
+     ## what about add all 1-grams
+     
+     # if(dim(result)[1]>0)
+     # {
+     #      res_df<-filter(ngram, type==1,nextToken %in% result$nextToken)
+     # }else
+     # {
+     #      res_df<-filter(ngram,type==1)
+     # }
+     
+     ## limiting result again Jan 17
+     res_df<-filter(ngram,type==1)
+     # res_df<-head(filter(ngram, type==1,nextToken %in% result$nextToken),6)
+     
+     res_df$prob<-res_df$freq/sum(res_df$freq)*lambda[1]
+     result<-rbind(result,cbind(res_df[,c("prevToken","nextToken","prob")]))
+     
+     
+     result<-group_by(result,nextToken)
+     result<-summarize(result,prob=sum(prob))
+     result<-arrange(result,desc(prob))
+     
+     
+}
+
+predict_text_linear_v3<-function(tokens,lambda)
+{
+     
+     result<-data.frame()
+     
+     i<-1
+     for(i in min(length(tokens),6-1):1)
+     {
+          print(paste("Lets check with word(s):",i))
+          
+          searchToken<-"^"
+          for(j in (length(tokens)-i+1):(length(tokens)))
+          {
+               # print(j)
+               searchToken<-paste0(searchToken,tokens[j],"[a-z]* ")
+               
+          }
+          
+          searchToken<-trimws(searchToken)
+          
+          print(paste("Search Token:",searchToken))
+          
+          ngram.f<-filter(ngram,type==(i+1))
+          l<-grep(searchToken,ngram.f$prevToken)
+          
+          
+          
+          
+          
+          
+          if(length(l)>0)
+          {
+               res_df<-ngram.f[l,]
+               
+               print(res_df)
+               
                res_df$prob<-res_df$freq/sum(res_df$freq)*lambda[i+1]
                result<-rbind(result,cbind(res_df[,c("prevToken","nextToken","prob")]))
                
@@ -376,7 +670,9 @@ predict_text_linear_add_half<-function(tokens,lambda)
      
 }
 
-head(result[1],100)
+
+
+# head(result[1],100)
 
 # predict_text_backoff<-function(tokens,predict_settings)
 # {
