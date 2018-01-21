@@ -35,14 +35,14 @@ shinyUI(fluidPage(
     mainPanel(
        # conditionalPanel(condition = "!output.setupComplete",
        #                  box( title = "loading")),
-       h3(textOutput("typedTxt")),
+       h3(textOutput("typedTxt"))
        # tabsetPanel(
        #      tabPanel("Table",tableOutput("nextToken"))
        # ),
        # h3(printOutput("nextToken")),
        # shiny::dataTableOutput("nextToken"),
        
-       plotOutput("distPlot")
+       # plotOutput("distPlot")
     )
   )
 ))

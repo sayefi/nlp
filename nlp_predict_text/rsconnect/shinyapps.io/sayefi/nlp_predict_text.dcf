@@ -5,8 +5,9 @@ account: sayefi
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 258867
-bundleId: 1185162
+bundleId: 1185198
 url: https://sayefi.shinyapps.io/nlp_predict_text/
-when: 1516517175.34998
+when: 1516519654.43008
 asMultiple: FALSE
 asStatic: FALSE
+ignoredFiles: my_ngram1t4c_01_20_2018.RData

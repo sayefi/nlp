@@ -12,13 +12,15 @@ library(stringr)
 
 source("predict_text.R")
 
+load("my_ngram1t4c_01_20_2018.Rdata")
+
 # Define server logic required to draw a histogram
-shinyServer(function(input, output, session) {
+shinyServer(function(input, output) {
      
      rv <- reactiveValues()
      rv$setupComplete <- FALSE
      rv$words<-NULL
-     
+     # rv$inputTxt<-"Welcome to the app..."
      
      observe({
           
@@ -26,7 +28,7 @@ shinyServer(function(input, output, session) {
                
                ## Simulate the data load
                # Sys.sleep(5)
-               load("my_ngram1t4c_01_20_2018.Rdata")
+               # load("my_ngram1t4c_01_20_2018.Rdata")
                ## set my condition to TRUE
                rv$setupComplete <- TRUE
           # }
@@ -52,7 +54,6 @@ shinyServer(function(input, output, session) {
      getWords<-reactive({
           inputTxt<-input$inTxt
           listWords<-NULL
-          output$typedTxt<-renderText(paste("You Typed: ",inputTxt))
           
           if(length(grep("[a-z]* $",inputTxt,value=F))==1)
           {
@@ -79,6 +80,7 @@ shinyServer(function(input, output, session) {
      })
      
      
+     output$typedTxt<-renderText(paste("You Typed: ",input$inTxt))
      
      output$nextToken<-renderTable(getWords(),colnames = FALSE)
      
