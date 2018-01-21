@@ -20,10 +20,10 @@ getTokens<-function(input)
      
      tokens<-NGramTokenizer(docs, Weka_control(min = 1, max = 1))
      
-     tokens[tokens %in% ngram$nextToken]
+     # tokens[tokens %in% ngram$nextToken]
 }
 
-input<-inputTxt
+
 getTokens_3<-function(input,option)
 {
      

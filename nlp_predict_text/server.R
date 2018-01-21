@@ -12,34 +12,36 @@ library(stringr)
 
 source("predict_text.R")
 
-load("my_ngram1t4c_01_20_2018.Rdata")
+# load("https://sayefi.shinyapps.io/nlp_predict_text/my_ngram1t4c_01_20_2018.RData")
+
+load("my_ngram1t4c_01_20_2018.RData", envir = .GlobalEnv)
+Sys.setlocale('LC_ALL','C')
 
 # Define server logic required to draw a histogram
 shinyServer(function(input, output) {
-     
      rv <- reactiveValues()
      rv$setupComplete <- FALSE
      rv$words<-NULL
-     # rv$inputTxt<-"Welcome to the app..."
+     # inputTxt<-"Welcome to the app...server"
      
-     observe({
-          
-          # if(input$btn_data){
-               
-               ## Simulate the data load
-               # Sys.sleep(5)
-               # load("my_ngram1t4c_01_20_2018.Rdata")
-               ## set my condition to TRUE
-               rv$setupComplete <- TRUE
-          # }
-          
-          ## the conditional panel reads this output
-          output$setupComplete <- reactive({
-               return(rv$setupComplete)
-          })
-          
-          # outputOptions(output, 'setupComplete', suspendWhenHidden=FALSE)
-     })
+     # observe({
+     #      
+     #      # if(input$btn_data){
+     #           
+     #           ## Simulate the data load
+     #           # Sys.sleep(5)
+     #           # load("my_ngram1t4c_01_20_2018.Rdata")
+     #           ## set my condition to TRUE
+     #           rv$setupComplete <- TRUE
+     #      # }
+     #      
+     #      ## the conditional panel reads this output
+     #      output$setupComplete <- reactive({
+     #           return(rv$setupComplete)
+     #      })
+     #      
+     #      # outputOptions(output, 'setupComplete', suspendWhenHidden=FALSE)
+     # })
      
      # observeEvent(input$okButton,{
      #      output$typedTxt<-input$inputTxt
@@ -52,12 +54,12 @@ shinyServer(function(input, output) {
      # output$typedTxt<-input$inputTxt
      
      getWords<-reactive({
-          inputTxt<-input$inTxt
+          # inputTxt<-input$inTxt
           listWords<-NULL
           
-          if(length(grep("[a-z]* $",inputTxt,value=F))==1)
+          if(length(grep("[a-z]* $",input$inTxt,value=F))==1)
           {
-               tokens<-getTokens(inputTxt)
+               tokens<-getTokens(input$inTxt)
                res<-predict_text_linear(tokens,lambda=c(0.5^8,0.5^4,0.5^2,0.5))
                # if(dim(res)[1]>1)
                # {
@@ -68,7 +70,7 @@ shinyServer(function(input, output) {
                # print(head(listWords,5))
           } else {
 
-               partword<-word(inputTxt,-1)
+               partword<-word(input$inTxt,-1)
                # print(paste("Partial word",partword))
                # print(head(rv$words,5))
                listWords<-grep(paste0("^",partword),rv$words,value=T)
