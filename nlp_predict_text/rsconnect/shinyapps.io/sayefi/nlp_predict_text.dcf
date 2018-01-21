@@ -1,0 +1,12 @@
+name: nlp_predict_text
+title: nlp_predict_text
+username:
+account: sayefi
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 258867
+bundleId: 1185162
+url: https://sayefi.shinyapps.io/nlp_predict_text/
+when: 1516517175.34998
+asMultiple: FALSE
+asStatic: FALSE

@@ -2,7 +2,10 @@
 
 source('~/Data_Science/Projects/nlp/predict_text.R')
 
-load("data/output/op/my_ngram_01_14_2018.RData")
+load("data/output/op/my_ngram1t4c_01_20_2018.RData")
+# load("data/output/op/my_ngram_01_15_2018.RData")
+# load("data/output/op/my_ngram_01_14_2018.RData")
+# load("data/output/op/my_ngram_01_17_2018.RData")
 
 ##[1]
 inputTxt<-"The guy in front of me just bought a pound of bacon, a bouquet, and a case of"
@@ -136,6 +139,15 @@ inputTxt<-"After the ice bucket challenge Louis will push his long wet hair out 
 # 2   fingers 1.145867e-06
 # 3      ears 9.329738e-07
 # 4      toes 3.944788e-07
+## with stemmed 
+# A tibble: 5 x 2
+# nextToken         prob
+# <chr>        <dbl>
+# 1      eyes 4.858977e-06
+# 2   fingers 1.145867e-06
+# 3      ears 9.329738e-07
+# 4    finger 7.952192e-07
+# 5      toes 3.944788e-07
 
 
 ##[9]
@@ -160,21 +172,180 @@ inputTxt<-"If this isnt the cutest thing you've ever seen, then you must be"
 # 1    asleep 9.507206e-07
 # 2    insane 5.691814e-07
 
+#[11]
+inputTxt<-"When you breathe, I want to be the air for you. I'll be there for you, I'd live and I'd"
+# A tibble: 4 x 2
+# nextToken         prob
+# <chr>        <dbl>
+# 1       die 4.358951e-05
+# 2       eat 2.994112e-05
+# 3      give 3.845877e-06
+# 4     sleep 1.231075e-06
+## back-off with stemmed
+# prevToken nextToken         prob
+# 1      live       die 1.072626e-04
+# 2      live       eat 7.150838e-05
 
+#[12]W
+inputTxt<-"Guy at my table's wife got up to go to the bathroom and I asked about dessert and he started telling me about his"
+# A tibble: 3 x 2
+# nextToken         prob
+# <chr>        <dbl>
+# 1 financial 1.019330e-06
+# 2 spiritual 3.250037e-07
+# 3   marital 3.282865e-08
+
+#[13]W
+inputTxt<-"I'd give anything to see arctic monkeys this"
+# A tibble: 4 x 2
+# nextToken         prob
+# <chr>        <dbl>
+# 1   morning 1.117690e-05
+# 2     month 9.179460e-06
+# 3   weekend 8.377979e-06
+# 4    decade 1.502777e-06
+
+#[14]
+inputTxt<-"Talking to your mom has the same effect as a hug and helps reduce your"
+# A tibble: 3 x 2
+# nextToken         prob
+# <chr>        <dbl>
+# 1    stress 1.252314e-06
+# 2 happiness 9.830663e-07
+# 3    hunger 7.889577e-07
+
+#[15]W
+inputTxt<-"When you were in Holland you were like 1 inch away from me but you hadn't time to take a"
+# back-off
+# prevToken nextToken         prob
+# 1      take      look 7.157895e-04
+# 2      take   picture 3.052632e-04
+# 3      take      walk 1.052632e-04
+# 4      take    minute 8.421053e-05
+## Linear
+# A tibble: 4 x 2
+# nextToken         prob
+# <chr>        <dbl>
+# 1      look 5.700050e-04
+# 2      walk 1.540131e-04
+# 3   picture 4.552161e-06
+# 4    minute 3.205923e-06
+## with Jan 14 ngrams & backoff
+# 1 to take a   picture 0.023076923
+# 2 to take a      look 0.012307692
+# 3 to take a      walk 0.004615385
+## Jan 14 linear
+# nextToken        prob
+# <chr>       <dbl>
+#      1   picture 0.021608610
+# 2      look 0.019332871
+# 3      walk 0.004688801
+# 4    minute 0.001112418
+
+
+#[16]W
+inputTxt<-"I'd just like all of these questions answered, a presentation of evidence, and a jury to settle the"
+# prevToken nextToken    prob
+# 1     settl      case 0.00128
+# 2     settl    matter 0.00032
+#[17]
+inputTxt<-"I can't deal with unsymetrical things. I can't even hold an uneven number of bags of groceries in each"
+# # A tibble: 4 x 2
+# nextToken         prob
+# <chr>        <dbl>
+#      1      hand 6.893987e-06
+# 2       arm 1.471469e-06
+# 3    finger 7.952192e-07
+# 4       toe 3.193400e-07
+
+#18W---R
+inputTxt<-"Every inch of you is perfect from the bottom to the"
+# A tibble: 4 x 2
+# nextToken         prob
+# <chr>        <dbl>
+# 1      side 5.266469e-04
+# 2       top 1.841607e-04
+# 3    center 9.699170e-06
+# 4    middle 4.758792e-06
+
+## Jan 14 linear
+# prevToken nextToken         prob
+# 1    to the       top 0.0006012430
+# 2    to the      side 0.0002404972
+# 3    to the    center 0.0002127475
+# 4    to the    middle 0.0001017488
+
+#19
+inputTxt<-"I'm thankful my childhood was filled with imagination and bruises from playing"
+# A tibble: 4 x 2
+# nextToken         prob
+# <chr>        <dbl>
+# 1   outside 6.756233e-06
+# 2    inside 5.510181e-06
+# 3     daily 3.468909e-06
+# 4    weekly 1.139606e-06
+
+#20W
+inputTxt<-"I like how the same people are in almost all of Adam Sandler's"
+# A tibble: 4 x 2
+# nextToken         prob
+# <chr>        <dbl>
+# 1   stories 4.032450e-06
+# 2  pictures 3.594141e-06
+# 3    movies 2.573505e-06
+# 4    novels 6.198953e-07
 
 tokens<-getTokens(inputTxt)
+
+tokens<-getTokens_v2(inputTxt)
+
+## best one so far
+res<-predict_text_linear(tokens,lambda=c(0.5^4,0.5^3,0.5^2,0.5))
+head(res$nextToken,40)
+
+res<-predict_text_linear_v4(tokens,lambda=c(0.5^4,0.5^3,0.5^2,0.5))
 
 # length(tokens)
 
 res<-predict_text_backoff(tokens)
 
 res<-predict_text_linear(tokens,lambda=c(0.4^6,0.4^5,0.4^4,0.4^3,0.4^2,0.4))
-head(res)
+head(res,100)
+
+#11
+filter(res, nextToken %in% c("give","sleep","die","eat"))
+
+#12
+filter(res, nextToken %in% c("financial","marital","horticultural","spiritual"))
+
+#13
+filter(res, nextToken %in% c("morning","weekend","decade","month"))
+
+#14
+filter(res, nextToken %in% c("happiness","stress","hunger","sleepiness"))
+
+#15
+filter(res, nextToken %in% c("walk","minute","picture","look"))
+
+#16
+filter(res, nextToken %in% c("incident","case","account","matter"))
+
+#17
+filter(res, nextToken %in% c("arm","finger","hand","toe"))
+
+#18
+filter(res, nextToken %in% c("center","middle","top","side"))
+
+#19
+filter(res, nextToken %in% c("daily","inside","weekly","outside"))
+
+#20
+filter(res, nextToken %in% c("movies","novels","stories","pictures"))
 
 
-## best one so far
-res<-predict_text_linear(tokens,lambda=c(0.5^6,0.5^5,0.5^4,0.5^3,0.5^2,0.5))
-head(res$nextToken,40)
+
+res<-predict_text_linear_v3(tokens,lambda=c(0.5^6,0.5^5,0.5^4,0.5^3,0.5^2,0.5))
+
 
 res<-predict_text_linear_v2(tokens,lambda=c(0.5^6,0.5^5,0.5^4,0.5^3,0.5^2,0.5))
 head(res$nextToken,40)

@@ -20,11 +20,11 @@ shinyUI(fluidPage(
     sidebarPanel(
          textInput("inTxt",
                    "Start typing here:",""),
-         actionButton("okButton","Enter"),
+         # actionButton("okButton","Enter"),
          tags$br(),
-         tags$br(),
+         helpText("Text Predictions:"),
+         tableOutput("nextToken"),
          em("Help"),
-         helpText("Steps to use this app:"),
          helpText("1. Enter Name of your city (ie. Toronto)."),
          helpText("2. Press Enter."),
          helpText("3. Have fun...")
@@ -36,6 +36,12 @@ shinyUI(fluidPage(
        # conditionalPanel(condition = "!output.setupComplete",
        #                  box( title = "loading")),
        h3(textOutput("typedTxt")),
+       # tabsetPanel(
+       #      tabPanel("Table",tableOutput("nextToken"))
+       # ),
+       # h3(printOutput("nextToken")),
+       # shiny::dataTableOutput("nextToken"),
+       
        plotOutput("distPlot")
     )
   )
