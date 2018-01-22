@@ -74,7 +74,7 @@ predict_text_backoff<-function(tokens)
      
      result<-data.frame()
 
-     for(i in min(length(tokens),6-1):1)
+     for(i in min(length(tokens),4-1):1)
      {
           print(paste("Lets check with word(s):",i))
           
@@ -133,7 +133,7 @@ predict_text_linear<-function(tokens,lambda)
           
           # print(paste("Search Token:",searchToken))
           
-          res_df<-head(ngram[ngram$prevToken==searchToken,],5)
+          res_df<-ngram[ngram$prevToken==searchToken,]
           
           # print(res_df)
           
@@ -161,7 +161,8 @@ predict_text_linear<-function(tokens,lambda)
      #      res_df<-filter(ngram,type==1)
      # }
      
-     res_df<-filter(ngram,type==1)
+     # stopping 1-gram addition in for shiny Jan 21,2:30pm
+     res_df<-ngram %>% filter(type==1) %>% filter(freq>1000)
      res_df$prob<-res_df$freq/sum(res_df$freq)*lambda[1]
      result<-rbind(result,cbind(res_df[,c("prevToken","nextToken","prob")]))
      

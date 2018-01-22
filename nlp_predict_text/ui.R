@@ -23,26 +23,28 @@ shinyUI(fluidPage(
          # actionButton("okButton","Enter"),
          tags$br(),
          helpText("Text Predictions:"),
-         tableOutput("nextToken"),
-         em("Help"),
-         helpText("1. Enter Name of your city (ie. Toronto)."),
-         helpText("2. Press Enter."),
-         helpText("3. Have fun...")
-         
+         tableOutput("nextToken")
+         # ,
+         # em("Help"),
+         # helpText("1. Enter Name of your city (ie. Toronto)."),
+         # helpText("2. Press Enter."),
+         # helpText("3. Have fun...")
+         # 
     ),
     
     # Show a plot of the generated distribution
     mainPanel(
        # conditionalPanel(condition = "!output.setupComplete",
        #                  box( title = "loading")),
-       h3(textOutput("typedTxt"))
+       # h3(textOutput("typedTxt")),
+       plotOutput("distPlot")
        # tabsetPanel(
        #      tabPanel("Table",tableOutput("nextToken"))
        # ),
        # h3(printOutput("nextToken")),
        # shiny::dataTableOutput("nextToken"),
        
-       # plotOutput("distPlot")
+
     )
   )
 ))

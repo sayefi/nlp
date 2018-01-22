@@ -9,12 +9,15 @@
 
 library(shiny)
 library(stringr)
+library(dplyr)
 
 source("predict_text.R")
 
 # load("https://sayefi.shinyapps.io/nlp_predict_text/my_ngram1t4c_01_20_2018.RData")
 
-load("my_ngram1t4c_01_20_2018.RData", envir = .GlobalEnv)
+# load("my_ngram1t4c_01_20_2018.RData", envir = .GlobalEnv)
+# smaller n-gram
+load("my_ngram1t4_01_20_2018.RData", envir = .GlobalEnv)
 Sys.setlocale('LC_ALL','C')
 
 # Define server logic required to draw a histogram
@@ -63,8 +66,8 @@ shinyServer(function(input, output) {
                res<-predict_text_linear(tokens,lambda=c(0.5^8,0.5^4,0.5^2,0.5))
                # if(dim(res)[1]>1)
                # {
-               listWords<-res$nextToken
-               rv$words<-listWords
+               rv$words<-head(res$nextToken,500)
+               rv$freq<-head(res$prob,500)
                # }
 
                # print(head(listWords,5))
@@ -73,11 +76,30 @@ shinyServer(function(input, output) {
                partword<-word(input$inTxt,-1)
                # print(paste("Partial word",partword))
                # print(head(rv$words,5))
-               listWords<-grep(paste0("^",partword),rv$words,value=T)
+               # print("here is the value of rv$words")
+               # print(rv$words)
+               wds<-rv$words
+               # print(wds)
+               l<-grep(paste0("^",partword),wds,value=F)
+               # print(l)
+               wds<-wds[l]
+               freqs<-rv$freq
+               freqs<-freqs[l]
+               rv$words<-wds
+               rv$freq<-freqs
+               # print(wds[l])
+               # wds<-wds[wds$nextToken==l,]
+               # print(wds)
+               # rv$words<-wds
+               # freqs<-rv$freq
+               # wds<-rv$words
+               # print(freqs)
+               # rv$freq<-freqs[l]
+               # rv$words<-wds[l]
                # print(head(listWords,5))
           }
           
-          head(listWords,5)
+          head(rv$words,5)
           
      })
      
@@ -132,15 +154,17 @@ shinyServer(function(input, output) {
      #      
      # })
      
-  # output$distPlot <- renderPlot({
-  #   
-  #   # generate bins based on input$bins from ui.R
-  #   x    <- faithful[, 2] 
-  #   bins <- seq(min(x), max(x), length.out = input$bins + 1)
-  #   
-  #   # draw the histogram with the specified number of bins
-  #   hist(x, breaks = bins, col = 'darkgray', border = 'white')
-  #   
-  # })
+  output$distPlot <- renderPlot({
+     if(length(rv$words)>0)
+       wordcloud(rv$words,rv$freq,colors=brewer.pal(8,"Dark2"),scale=c(8,1),
+                 min.freq=0,max.words = 30,random.order=TRUE)
+    # # generate bins based on input$bins from ui.R
+    # x    <- faithful[, 2]
+    # bins <- seq(min(x), max(x), length.out = input$bins + 1)
+    #
+    # # draw the histogram with the specified number of bins
+    # hist(x, breaks = bins, col = 'darkgray', border = 'white')
+
+  })
   
 })
