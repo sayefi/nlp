@@ -10,6 +10,8 @@
 library(shiny)
 library(stringr)
 library(dplyr)
+library(wordcloud)
+library(RColorBrewer)
 
 source("predict_text.R")
 
@@ -154,10 +156,12 @@ shinyServer(function(input, output) {
      #      
      # })
      
+     wordcloud_rep <- repeatable(wordcloud)
+     
   output$distPlot <- renderPlot({
      if(length(rv$words)>0)
-       wordcloud(rv$words,rv$freq,colors=brewer.pal(8,"Dark2"),scale=c(8,1),
-                 min.freq=0,max.words = 30,random.order=TRUE)
+       wordcloud_rep(rv$words,rv$freq,colors=brewer.pal(8,"Dark2"),scale=c(8,1),
+                 min.freq=0,max.words = 30,random.order=TRUE, rot.per=.35)
     # # generate bins based on input$bins from ui.R
     # x    <- faithful[, 2]
     # bins <- seq(min(x), max(x), length.out = input$bins + 1)

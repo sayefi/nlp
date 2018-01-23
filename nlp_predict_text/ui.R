@@ -19,13 +19,14 @@ shinyUI(fluidPage(
   sidebarLayout(
     sidebarPanel(
          textInput("inTxt",
-                   "Start typing here:","Welcome to the app..."),
+                   "Start typing here:",""),
          # actionButton("okButton","Enter"),
+         em("Hint: While typing, hit space to see predictions"),
          tags$br(),
          helpText("Text Predictions:"),
          tableOutput("nextToken")
          # ,
-         # em("Help"),
+
          # helpText("1. Enter Name of your city (ie. Toronto)."),
          # helpText("2. Press Enter."),
          # helpText("3. Have fun...")
