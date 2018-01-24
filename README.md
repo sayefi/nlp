@@ -1,3 +1,4 @@
+
 # Predictive texting in R
 
 ## [Download input files](download_input.r)
@@ -21,4 +22,3 @@
 ### [UI.R](nlp_predict_text/UI.R)
 
 ### [Predict text script used in app](predict_text_DT.R)
-
