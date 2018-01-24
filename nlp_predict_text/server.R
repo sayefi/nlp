@@ -13,13 +13,8 @@ library(dplyr)
 library(wordcloud)
 library(RColorBrewer)
 
-source("predict_text.R")
+source("predict_text_DT.R")
 
-# load("https://sayefi.shinyapps.io/nlp_predict_text/my_ngram1t4c_01_20_2018.RData")
-
-# load("my_ngram1t4c_01_20_2018.RData", envir = .GlobalEnv)
-# smaller n-gram
-load("my_ngram1t4_01_20_2018.RData", envir = .GlobalEnv)
 Sys.setlocale('LC_ALL','C')
 
 # Define server logic required to draw a histogram
@@ -159,7 +154,7 @@ shinyServer(function(input, output) {
      wordcloud_rep <- repeatable(wordcloud)
      
   output$distPlot <- renderPlot({
-     if(length(rv$words)>0)
+     if(length(rv$words)>0 && input$onWordCloud)
        wordcloud_rep(rv$words,rv$freq,colors=brewer.pal(8,"Dark2"),scale=c(8,1),
                  min.freq=0,max.words = 30,random.order=TRUE, rot.per=.35)
     # # generate bins based on input$bins from ui.R

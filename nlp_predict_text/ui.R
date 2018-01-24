@@ -21,7 +21,8 @@ shinyUI(fluidPage(
          textInput("inTxt",
                    "Start typing here:",""),
          # actionButton("okButton","Enter"),
-         em("Hint: While typing, hit space to see predictions"),
+         em("Hint: Type a word and hit space to start prediction..."),
+         checkboxInput("onWordCloud", label = "Show word cloud", value = FALSE),
          tags$br(),
          helpText("Text Predictions:"),
          tableOutput("nextToken")
