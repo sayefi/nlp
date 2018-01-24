@@ -1,0 +1,38 @@
+Predictive Texting using R
+========================================================
+author: Sayef Ishaque
+date: Jan 23, 2018
+autosize: true
+
+Purpose
+========================================================
+Build a predictive texting solution to 
+- Demonstrate skills in R and Data science
+- Understand the practical challenges faced by Data Scientists 
+- Effort to build an end-user product 
+- Explore ideas, work with competing theories and devise trade-off based on result
+
+Methodology
+========================================================
+- A courpus of around 560MB has been analyzed (using sampling,r tm package)
+- During exploration, a range of 1-6 n-grams have been developed
+- Different varients has been explored with removing stop words, stemming 
+- n-gram frequencies have been corrected with good-turing method
+- Both stupid back-off and linear interpolation has been implemented and tested
+- Correctness has been reviewed with different validation datasets
+
+Demonstration
+========================================================
+- Shiny app link here <https://sayefi.shinyapps.io/nlp_predict_text/>
+- A simpler version that shows top 5 predictions
+- Shows prediction as you type - Interactive!
+- Shows a wordcloud (optional, slows down)
+
+Area of Improvement / Future use
+========================================================
+- Enhance prediction by personalized n-grams 
+- Combine with sentiment analysis
+- Use in Kiosks for quick input and response (don't need to type-in entire product name, etc.)
+- Personalized search, product catalogue
+- Accssibility solutions
+- Interactive/personalized FAQ or knowledge-base search
