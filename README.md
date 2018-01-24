@@ -16,9 +16,9 @@
 
 ## Shiny app codes
 
-### [server.io](nlp_predict_text/server.io)
+### [server.io](nlp_predict_text/server.R)
 
-### [UI.io](nlp_predict_text/UI.io)
+### [UI.io](nlp_predict_text/UI.R)
 
 ### [Predict text script used in app](predict_text_DT.R)
 
